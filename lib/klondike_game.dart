@@ -20,16 +20,14 @@ class KlondikeGame extends FlameGame {
     const Rect.fromLTWH(0, 0, cardWidth, cardHeight),
     const Radius.circular(cardRadius),
   );
+
   @override
   Future<void> onLoad() async {
     await Flame.images.load('klondike-sprites.png');
 
-    final stock = StockPile()
-      ..size = cardSize
-      ..position = Vector2(cardGap, cardGap);
-    final waste = WastePile()
-      ..size = cardSize
-      ..position = Vector2(cardWidth + 2 * cardGap, cardGap);
+    final stock = StockPile(position: Vector2(cardGap, cardGap));
+    final waste =
+        WastePile(position: Vector2(cardWidth + 2 * cardGap, cardGap));
     final foundations = List.generate(
       4,
       (i) => FoundationPile(
@@ -39,12 +37,12 @@ class KlondikeGame extends FlameGame {
     );
     final piles = List.generate(
       7,
-      (i) => TableauPile()
-        ..size = cardSize
-        ..position = Vector2(
+      (i) => TableauPile(
+        position: Vector2(
           cardGap + i * (cardWidth + cardGap),
           cardHeight + 2 * cardGap,
         ),
+      ),
     );
 
     world.add(stock);
@@ -59,19 +57,19 @@ class KlondikeGame extends FlameGame {
 
     final cards = [
       for (var rank = 1; rank <= 13; rank++)
-        for (var suit = 0; suit < 4; suit++) Card(rank, suit)
+        for (var suit = 0; suit < 4; suit++) Card(rank, suit),
     ];
     cards.shuffle();
     world.addAll(cards);
 
-    int cardToDeal = cards.length - 1;
+    var cardToDeal = cards.length - 1;
     for (var i = 0; i < 7; i++) {
-      for (var j = 0; j < 7; j++) {
+      for (var j = i; j < 7; j++) {
         piles[j].acquireCard(cards[cardToDeal--]);
       }
       piles[i].flipTopCard();
     }
-    for (int n = 0; n <= cardToDeal; n++) {
+    for (var n = 0; n <= cardToDeal; n++) {
       stock.acquireCard(cards[n]);
     }
   }
