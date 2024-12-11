@@ -1,12 +1,12 @@
-import 'dart:math';
+import 'dart:ui';
 
-import 'package:flame/game.dart';
-import 'package:flame/flame.dart';
 import 'package:flame/components.dart';
+import 'package:flame/flame.dart';
+import 'package:flame/game.dart';
 
 import 'components/card.dart';
-import 'components/stock_pile.dart';
 import 'components/foundation_pile.dart';
+import 'components/stock_pile.dart';
 import 'components/tableau_pile.dart';
 import 'components/waste_pile.dart';
 
@@ -16,6 +16,10 @@ class KlondikeGame extends FlameGame {
   static const double cardHeight = 1400.0;
   static const double cardRadius = 100.0;
   static final Vector2 cardSize = Vector2(cardWidth, cardHeight);
+  static final cardRRect = RRect.fromRectAndRadius(
+    const Rect.fromLTWH(0, 0, cardWidth, cardHeight),
+    const Radius.circular(cardRadius),
+  );
   @override
   Future<void> onLoad() async {
     await Flame.images.load('klondike-sprites.png');
@@ -28,10 +32,10 @@ class KlondikeGame extends FlameGame {
       ..position = Vector2(cardWidth + 2 * cardGap, cardGap);
     final foundations = List.generate(
       4,
-      (i) => FoundationPile()
-        ..size = cardSize
-        ..position =
-            Vector2((i + 3) * (cardWidth + cardGap) + cardGap, cardGap),
+      (i) => FoundationPile(
+        i,
+        position: Vector2((i + 3) * (cardWidth + cardGap) + cardGap, cardGap),
+      ),
     );
     final piles = List.generate(
       7,
@@ -53,7 +57,23 @@ class KlondikeGame extends FlameGame {
     camera.viewfinder.position = Vector2(cardWidth * 3.5 + cardGap * 4, 0);
     camera.viewfinder.anchor = Anchor.topCenter;
 
-    final random = Random();
+    final cards = [
+      for (var rank = 1; rank <= 13; rank++)
+        for (var suit = 0; suit < 4; suit++) Card(rank, suit)
+    ];
+    cards.shuffle();
+    world.addAll(cards);
+
+    int cardToDeal = cards.length - 1;
+    for (var i = 0; i < 7; i++) {
+      for (var j = 0; j < 7; j++) {
+        piles[j].acquireCard(cards[cardToDeal--]);
+      }
+      piles[i].flipTopCard();
+    }
+    for (int n = 0; n <= cardToDeal; n++) {
+      stock.acquireCard(cards[n]);
+    }
   }
 }
 
